@@ -16,6 +16,11 @@
       --amber:#d97706;
       --red:#dc2626;
       --slate:#475569;
+      --softblue:#e0f2fe;
+      --softgreen:#dcfce7;
+      --softamber:#fef3c7;
+      --softred:#fee2e2;
+      --softslate:#f1f5f9;
     }
     *{box-sizing:border-box}
     body{
@@ -25,7 +30,7 @@
       color:var(--text);
     }
     .wrap{
-      max-width:1280px;
+      max-width:1400px;
       margin:0 auto;
       padding:24px;
     }
@@ -44,6 +49,7 @@
     .sub{
       color:var(--muted);
       margin-top:6px;
+      max-width:850px;
     }
     .btn{
       background:var(--blue);
@@ -54,6 +60,7 @@
       font-weight:700;
       cursor:pointer;
     }
+    .btn:hover{opacity:.95}
     .btn.secondary{
       background:#fff;
       color:var(--text);
@@ -85,7 +92,7 @@
     }
     .row{
       display:grid;
-      grid-template-columns:2fr 1fr;
+      grid-template-columns:2.15fr 1fr;
       gap:16px;
       margin-bottom:20px;
     }
@@ -103,7 +110,10 @@
       font-size:14px;
       background:#fff;
     }
-    textarea{min-height:88px; resize:vertical}
+    textarea{
+      min-height:88px;
+      resize:vertical;
+    }
     table{
       width:100%;
       border-collapse:collapse;
@@ -121,6 +131,7 @@
       font-size:12px;
       text-transform:uppercase;
       letter-spacing:.04em;
+      white-space:nowrap;
     }
     .badge{
       display:inline-block;
@@ -131,19 +142,19 @@
       white-space:nowrap;
     }
     .New,.Sent,.Approved,.Planning,.Dispatched,.Delivered,.Ready,.ReadytoDispatch,.Ready-to-Dispatch{
-      background:#e0f2fe;
+      background:var(--softblue);
       color:#075985;
     }
     .DocsPending{
-      background:#fef3c7;
+      background:var(--softamber);
       color:#92400e;
     }
     .Issue,.OnHold{
-      background:#fee2e2;
+      background:var(--softred);
       color:#991b1b;
     }
     .LocalSale,.ExportSale,.Procurement{
-      background:#f1f5f9;
+      background:var(--softslate);
       color:#334155;
     }
     .section-title{
@@ -177,7 +188,33 @@
       font-size:12px;
       margin-top:10px;
     }
-    @media (max-width: 1000px){
+    .tabs{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+    .tab{
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--text);
+      border-radius:10px;
+      padding:10px 14px;
+      cursor:pointer;
+      font-weight:700;
+    }
+    .tab.active{
+      background:var(--blue);
+      color:#fff;
+      border-color:var(--blue);
+    }
+    .status-select{
+      min-width:140px;
+    }
+    .table-wrap{
+      overflow:auto;
+    }
+    @media (max-width: 1100px){
       .grid{grid-template-columns:repeat(2,1fr)}
       .row{grid-template-columns:1fr}
     }
@@ -193,7 +230,9 @@
     <div class="topbar">
       <div>
         <h1>Ops Control</h1>
-        <div class="sub">Your simple browser-based control panel for local sales, export sales, procurement movements, and shipment status.</div>
+        <div class="sub">
+          Your browser-based operations hub for procurement, export sales, local sales, shipment tracking, ETA visibility, and status control.
+        </div>
       </div>
       <div class="pill-row">
         <button class="btn secondary" onclick="exportData()">Export CSV</button>
@@ -222,20 +261,32 @@
 
     <div class="row">
       <div class="card">
-        <h2 class="section-title">Jobs</h2>
-        <div class="toolbar">
-          <input id="search" placeholder="Search customer, product, status, notes..." oninput="render()" />
+        <h2 class="section-title">Jobs Dashboard</h2>
+
+        <div class="tabs">
+          <button class="tab active" id="tabAll" onclick="setActiveTab('All')">All Jobs</button>
+          <button class="tab" id="tabProcurement" onclick="setActiveTab('Procurement')">Procurement</button>
+          <button class="tab" id="tabExport Sale" onclick="setActiveTab('Export Sale')">Export Sales</button>
+          <button class="tab" id="tabLocal Sale" onclick="setActiveTab('Local Sale')">Local Sales</button>
         </div>
-        <div style="overflow:auto;">
+
+        <div class="toolbar">
+          <input id="search" placeholder="Search customer, product, status, carrier, tracking, notes..." oninput="render()" />
+        </div>
+
+        <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Job</th>
+                <th>Job No.</th>
                 <th>Customer</th>
                 <th>Type</th>
                 <th>Product</th>
                 <th>Qty</th>
                 <th>Ship Date</th>
+                <th>ETA</th>
+                <th>Carrier</th>
+                <th>Tracking</th>
                 <th>Status</th>
                 <th>Notes</th>
                 <th>Update</th>
@@ -244,24 +295,29 @@
             <tbody id="jobRows"></tbody>
           </table>
         </div>
-        <div class="footer-note">This MVP saves data in your browser on this device only.</div>
+
+        <div class="footer-note">
+          This version saves data in your browser on this device only. Next step can be online storage and document upload.
+        </div>
       </div>
 
       <div class="card">
         <h2 class="section-title">Add Job</h2>
+
         <div class="form-grid">
           <div>
-            <label>Customer</label>
-            <input id="customer" placeholder="Customer name" />
+            <label>Customer / Supplier</label>
+            <input id="customer" placeholder="Name" />
           </div>
           <div>
             <label>Job Type</label>
-            <select id="jobType">
+            <select id="jobType" onchange="toggleTypeDefaults()">
               <option>Local Sale</option>
               <option>Export Sale</option>
               <option>Procurement</option>
             </select>
           </div>
+
           <div>
             <label>Product</label>
             <select id="product">
@@ -277,10 +333,25 @@
             <label>Quantity</label>
             <input id="qty" placeholder="e.g. 16 cylinders" />
           </div>
+
           <div>
             <label>Ship Date</label>
             <input id="shipDate" type="date" />
           </div>
+          <div>
+            <label>ETA</label>
+            <input id="eta" type="date" />
+          </div>
+
+          <div>
+            <label>Carrier</label>
+            <input id="carrier" placeholder="e.g. Toll, DHL, Mainfreight" />
+          </div>
+          <div>
+            <label>Tracking / Connote No.</label>
+            <input id="tracking" placeholder="Tracking number" />
+          </div>
+
           <div>
             <label>Status</label>
             <select id="status">
@@ -297,10 +368,12 @@
             </select>
           </div>
         </div>
+
         <div style="margin-top:12px;">
           <label>Notes</label>
           <textarea id="notes" placeholder="Anything important to remember"></textarea>
         </div>
+
         <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
           <button class="btn" onclick="addJob()">Save Job</button>
           <button class="btn secondary" onclick="clearForm()">Clear</button>
@@ -309,20 +382,30 @@
         <div style="margin-top:20px;">
           <h2 class="section-title">Products</h2>
           <div class="pill-row" id="productList"></div>
-          <div class="small">You can add full AQL products later when we expand this.</div>
+          <div class="small">You can add the full AQL product range later.</div>
         </div>
 
         <div style="margin-top:20px;">
           <h2 class="section-title">Statuses</h2>
           <div class="pill-row" id="statusList"></div>
-          <div class="small">These can be changed later as you use it.</div>
+          <div class="small">We can change these on the fly as you use the system.</div>
+        </div>
+
+        <div style="margin-top:20px;">
+          <h2 class="section-title">Job Number Logic</h2>
+          <div class="pill-row">
+            <span class="pill">P-001 = Procurement</span>
+            <span class="pill">E-001 = Export Sale</span>
+            <span class="pill">L-001 = Local Sale</span>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    const STORAGE_KEY = "ops-control-jobs-v1";
+    const STORAGE_KEY = "ops-control-jobs-v2";
+    let activeTab = "All";
 
     const products = ["eFUME","CO2","Ethyl Formate","Equipment","EDN","AQL"];
     const statuses = ["New","Sent","Approved","Planning","Docs Pending","Ready to Dispatch","Dispatched","Delivered","On Hold","Issue"];
@@ -344,33 +427,70 @@
       document.getElementById("statusList").innerHTML = statuses.map(s => `<span class="pill">${s}</span>`).join("");
     }
 
+    function setActiveTab(tab){
+      activeTab = tab;
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      const tabId = tab === "All" ? "tabAll" : "tab" + tab;
+      const btn = document.getElementById(tabId);
+      if (btn) btn.classList.add("active");
+      render();
+    }
+
+    function getPrefix(jobType){
+      if (jobType === "Procurement") return "P";
+      if (jobType === "Export Sale") return "E";
+      return "L";
+    }
+
+    function getNextJobNumber(jobType, jobs){
+      const prefix = getPrefix(jobType);
+      const sameType = jobs.filter(j => j.id && j.id.startsWith(prefix + "-"));
+      let max = 0;
+
+      sameType.forEach(j => {
+        const parts = j.id.split("-");
+        const num = parseInt(parts[1], 10);
+        if (!isNaN(num) && num > max) max = num;
+      });
+
+      const next = String(max + 1).padStart(3, "0");
+      return `${prefix}-${next}`;
+    }
+
     function render(){
       const search = document.getElementById("search").value.toLowerCase().trim();
       const jobs = getJobs();
 
-      const filtered = jobs.filter(j =>
+      let filtered = jobs.filter(j =>
         Object.values(j).join(" ").toLowerCase().includes(search)
       );
+
+      if (activeTab !== "All"){
+        filtered = filtered.filter(j => j.jobType === activeTab);
+      }
 
       document.getElementById("jobRows").innerHTML = filtered.length ? filtered.map(job => `
         <tr>
           <td><strong>${job.id}</strong></td>
-          <td>${job.customer}</td>
+          <td>${job.customer || "-"}</td>
           <td><span class="badge ${badgeClass(job.jobType)}">${job.jobType}</span></td>
-          <td>${job.product}</td>
-          <td>${job.qty}</td>
+          <td>${job.product || "-"}</td>
+          <td>${job.qty || "-"}</td>
           <td>${job.shipDate || "-"}</td>
+          <td>${job.eta || "-"}</td>
+          <td>${job.carrier || "-"}</td>
+          <td>${job.tracking || "-"}</td>
           <td><span class="badge ${badgeClass(job.status)}">${job.status}</span></td>
           <td>${job.notes || "-"}</td>
           <td>
-            <select onchange="updateStatus('${job.id}', this.value)">
+            <select class="status-select" onchange="updateStatus('${job.id}', this.value)">
               ${statuses.map(s => `<option ${s===job.status ? "selected" : ""}>${s}</option>`).join("")}
             </select>
           </td>
         </tr>
       `).join("") : `
         <tr>
-          <td colspan="9" style="text-align:center; color:#6b7280; padding:20px;">No jobs yet</td>
+          <td colspan="12" style="text-align:center; color:#6b7280; padding:20px;">No jobs found</td>
         </tr>
       `;
 
@@ -379,16 +499,31 @@
       document.getElementById("kpiDelivered").textContent = jobs.filter(j => j.status === "Delivered").length;
 
       const today = new Date();
+      today.setHours(0,0,0,0);
       const in7 = new Date();
+      in7.setHours(0,0,0,0);
       in7.setDate(today.getDate() + 7);
 
       const soon = jobs.filter(j => {
-        if (!j.shipDate) return false;
-        const d = new Date(j.shipDate + "T00:00:00");
+        if (!j.eta) return false;
+        const d = new Date(j.eta + "T00:00:00");
         return d >= today && d <= in7;
       }).length;
 
       document.getElementById("kpiSoon").textContent = soon;
+    }
+
+    function toggleTypeDefaults(){
+      const jobType = document.getElementById("jobType").value;
+      const statusEl = document.getElementById("status");
+
+      if (jobType === "Procurement"){
+        statusEl.value = "Planning";
+      } else if (jobType === "Export Sale"){
+        statusEl.value = "Planning";
+      } else {
+        statusEl.value = "New";
+      }
     }
 
     function addJob(){
@@ -397,23 +532,30 @@
       const product = document.getElementById("product").value;
       const qty = document.getElementById("qty").value.trim();
       const shipDate = document.getElementById("shipDate").value;
+      const eta = document.getElementById("eta").value;
+      const carrier = document.getElementById("carrier").value.trim();
+      const tracking = document.getElementById("tracking").value.trim();
       const status = document.getElementById("status").value;
       const notes = document.getElementById("notes").value.trim();
 
-      if (!customer) {
-        alert("Please enter a customer");
+      if (!customer){
+        alert("Please enter a customer or supplier");
         return;
       }
 
       const jobs = getJobs();
-      const nextNum = jobs.length + 101;
+      const id = getNextJobNumber(jobType, jobs);
+
       const job = {
-        id: "JOB-" + nextNum,
+        id,
         customer,
         jobType,
         product,
         qty,
         shipDate,
+        eta,
+        carrier,
+        tracking,
         status,
         notes,
         createdAt: new Date().toISOString()
@@ -431,6 +573,9 @@
       document.getElementById("product").value = "eFUME";
       document.getElementById("qty").value = "";
       document.getElementById("shipDate").value = "";
+      document.getElementById("eta").value = "";
+      document.getElementById("carrier").value = "";
+      document.getElementById("tracking").value = "";
       document.getElementById("status").value = "New";
       document.getElementById("notes").value = "";
     }
@@ -448,34 +593,43 @@
     function seedSampleData(){
       const sample = [
         {
-          id:"JOB-101",
+          id:"E-001",
           customer:"Pharmochem",
           jobType:"Export Sale",
           product:"eFUME",
           qty:"16 cylinders",
           shipDate:"2026-04-08",
+          eta:"2026-04-15",
+          carrier:"Mainfreight",
+          tracking:"EX-445812",
           status:"Ready to Dispatch",
           notes:"Auckland shipment",
           createdAt:new Date().toISOString()
         },
         {
-          id:"JOB-102",
+          id:"L-001",
           customer:"Local Customer",
           jobType:"Local Sale",
           product:"AQL",
           qty:"4 drums",
           shipDate:"2026-04-10",
+          eta:"2026-04-10",
+          carrier:"Toll",
+          tracking:"LS-889101",
           status:"Planning",
           notes:"Quote approved",
           createdAt:new Date().toISOString()
         },
         {
-          id:"JOB-103",
+          id:"P-001",
           customer:"Internal Transfer",
           jobType:"Procurement",
           product:"Equipment",
           qty:"2 monitors",
           shipDate:"2026-04-12",
+          eta:"2026-04-12",
+          carrier:"Internal",
+          tracking:"INT-001",
           status:"Docs Pending",
           notes:"Internal movement",
           createdAt:new Date().toISOString()
@@ -491,10 +645,12 @@
         alert("No jobs to export yet");
         return;
       }
-      const headers = ["id","customer","jobType","product","qty","shipDate","status","notes","createdAt"];
+
+      const headers = ["id","customer","jobType","product","qty","shipDate","eta","carrier","tracking","status","notes","createdAt"];
       const rows = [headers.join(",")].concat(
         jobs.map(j => headers.map(h => `"${String(j[h] || "").replace(/"/g,'""')}"`).join(","))
       );
+
       const blob = new Blob([rows.join("\n")], {type:"text/csv;charset=utf-8;"});
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
