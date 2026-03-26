@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ops Control</title>
+  <style>
+    :root{
+      --bg:#f4f7fb;
+      --card:#ffffff;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --line:#e5e7eb;
+      --blue:#2563eb;
+      --green:#16a34a;
+      --amber:#d97706;
+      --red:#dc2626;
+      --slate:#475569;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Arial, Helvetica, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+    .wrap{
+      max-width:1280px;
+      margin:0 auto;
+      padding:24px;
+    }
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:16px;
+      margin-bottom:20px;
+      flex-wrap:wrap;
+    }
+    h1{
+      margin:0;
+      font-size:32px;
+    }
+    .sub{
+      color:var(--muted);
+      margin-top:6px;
+    }
+    .btn{
+      background:var(--blue);
+      color:#fff;
+      border:none;
+      border-radius:10px;
+      padding:12px 16px;
+      font-weight:700;
+      cursor:pointer;
+    }
+    .btn.secondary{
+      background:#fff;
+      color:var(--text);
+      border:1px solid var(--line);
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:16px;
+      margin-bottom:20px;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:18px;
+      box-shadow:0 2px 10px rgba(0,0,0,.04);
+    }
+    .card h3{
+      margin:0 0 8px 0;
+      font-size:14px;
+      color:var(--muted);
+      font-weight:600;
+    }
+    .kpi{
+      font-size:28px;
+      font-weight:800;
+      margin:0;
+    }
+    .row{
+      display:grid;
+      grid-template-columns:2fr 1fr;
+      gap:16px;
+      margin-bottom:20px;
+    }
+    .toolbar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+    input, select, textarea{
+      width:100%;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      border-radius:10px;
+      font-size:14px;
+      background:#fff;
+    }
+    textarea{min-height:88px; resize:vertical}
+    table{
+      width:100%;
+      border-collapse:collapse;
+      background:#fff;
+      font-size:14px;
+    }
+    th, td{
+      text-align:left;
+      padding:12px 10px;
+      border-bottom:1px solid var(--line);
+      vertical-align:top;
+    }
+    th{
+      color:var(--muted);
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+    .badge{
+      display:inline-block;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
+      white-space:nowrap;
+    }
+    .New,.Sent,.Approved,.Planning,.Dispatched,.Delivered,.Ready,.ReadytoDispatch,.Ready-to-Dispatch{
+      background:#e0f2fe;
+      color:#075985;
+    }
+    .DocsPending{
+      background:#fef3c7;
+      color:#92400e;
+    }
+    .Issue,.OnHold{
+      background:#fee2e2;
+      color:#991b1b;
+    }
+    .LocalSale,.ExportSale,.Procurement{
+      background:#f1f5f9;
+      color:#334155;
+    }
+    .section-title{
+      margin:0 0 14px 0;
+      font-size:18px;
+    }
+    .form-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+    .small{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:8px;
+    }
+    .pill-row{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .pill{
+      background:#f8fafc;
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:8px 12px;
+      font-size:13px;
+    }
+    .footer-note{
+      color:var(--muted);
+      font-size:12px;
+      margin-top:10px;
+    }
+    @media (max-width: 1000px){
+      .grid{grid-template-columns:repeat(2,1fr)}
+      .row{grid-template-columns:1fr}
+    }
+    @media (max-width: 640px){
+      .grid,.form-grid{grid-template-columns:1fr}
+      .wrap{padding:14px}
+      h1{font-size:26px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <h1>Ops Control</h1>
+        <div class="sub">Your simple browser-based control panel for local sales, export sales, procurement movements, and shipment status.</div>
+      </div>
+      <div class="pill-row">
+        <button class="btn secondary" onclick="exportData()">Export CSV</button>
+        <button class="btn" onclick="seedSampleData()">Load Sample Data</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Total Jobs</h3>
+        <p class="kpi" id="kpiTotal">0</p>
+      </div>
+      <div class="card">
+        <h3>Shipping Soon</h3>
+        <p class="kpi" id="kpiSoon">0</p>
+      </div>
+      <div class="card">
+        <h3>Docs Pending</h3>
+        <p class="kpi" id="kpiDocs">0</p>
+      </div>
+      <div class="card">
+        <h3>Delivered</h3>
+        <p class="kpi" id="kpiDelivered">0</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="card">
+        <h2 class="section-title">Jobs</h2>
+        <div class="toolbar">
+          <input id="search" placeholder="Search customer, product, status, notes..." oninput="render()" />
+        </div>
+        <div style="overflow:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Job</th>
+                <th>Customer</th>
+                <th>Type</th>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Ship Date</th>
+                <th>Status</th>
+                <th>Notes</th>
+                <th>Update</th>
+              </tr>
+            </thead>
+            <tbody id="jobRows"></tbody>
+          </table>
+        </div>
+        <div class="footer-note">This MVP saves data in your browser on this device only.</div>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">Add Job</h2>
+        <div class="form-grid">
+          <div>
+            <label>Customer</label>
+            <input id="customer" placeholder="Customer name" />
+          </div>
+          <div>
+            <label>Job Type</label>
+            <select id="jobType">
+              <option>Local Sale</option>
+              <option>Export Sale</option>
+              <option>Procurement</option>
+            </select>
+          </div>
+          <div>
+            <label>Product</label>
+            <select id="product">
+              <option>eFUME</option>
+              <option>CO2</option>
+              <option>Ethyl Formate</option>
+              <option>Equipment</option>
+              <option>EDN</option>
+              <option>AQL</option>
+            </select>
+          </div>
+          <div>
+            <label>Quantity</label>
+            <input id="qty" placeholder="e.g. 16 cylinders" />
+          </div>
+          <div>
+            <label>Ship Date</label>
+            <input id="shipDate" type="date" />
+          </div>
+          <div>
+            <label>Status</label>
+            <select id="status">
+              <option>New</option>
+              <option>Sent</option>
+              <option>Approved</option>
+              <option>Planning</option>
+              <option>Docs Pending</option>
+              <option>Ready to Dispatch</option>
+              <option>Dispatched</option>
+              <option>Delivered</option>
+              <option>On Hold</option>
+              <option>Issue</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:12px;">
+          <label>Notes</label>
+          <textarea id="notes" placeholder="Anything important to remember"></textarea>
+        </div>
+        <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn" onclick="addJob()">Save Job</button>
+          <button class="btn secondary" onclick="clearForm()">Clear</button>
+        </div>
+
+        <div style="margin-top:20px;">
+          <h2 class="section-title">Products</h2>
+          <div class="pill-row" id="productList"></div>
+          <div class="small">You can add full AQL products later when we expand this.</div>
+        </div>
+
+        <div style="margin-top:20px;">
+          <h2 class="section-title">Statuses</h2>
+          <div class="pill-row" id="statusList"></div>
+          <div class="small">These can be changed later as you use it.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "ops-control-jobs-v1";
+
+    const products = ["eFUME","CO2","Ethyl Formate","Equipment","EDN","AQL"];
+    const statuses = ["New","Sent","Approved","Planning","Docs Pending","Ready to Dispatch","Dispatched","Delivered","On Hold","Issue"];
+
+    function getJobs(){
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    }
+
+    function saveJobs(jobs){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs));
+    }
+
+    function badgeClass(value){
+      return String(value).replace(/\s+/g, "");
+    }
+
+    function renderPills(){
+      document.getElementById("productList").innerHTML = products.map(p => `<span class="pill">${p}</span>`).join("");
+      document.getElementById("statusList").innerHTML = statuses.map(s => `<span class="pill">${s}</span>`).join("");
+    }
+
+    function render(){
+      const search = document.getElementById("search").value.toLowerCase().trim();
+      const jobs = getJobs();
+
+      const filtered = jobs.filter(j =>
+        Object.values(j).join(" ").toLowerCase().includes(search)
+      );
+
+      document.getElementById("jobRows").innerHTML = filtered.length ? filtered.map(job => `
+        <tr>
+          <td><strong>${job.id}</strong></td>
+          <td>${job.customer}</td>
+          <td><span class="badge ${badgeClass(job.jobType)}">${job.jobType}</span></td>
+          <td>${job.product}</td>
+          <td>${job.qty}</td>
+          <td>${job.shipDate || "-"}</td>
+          <td><span class="badge ${badgeClass(job.status)}">${job.status}</span></td>
+          <td>${job.notes || "-"}</td>
+          <td>
+            <select onchange="updateStatus('${job.id}', this.value)">
+              ${statuses.map(s => `<option ${s===job.status ? "selected" : ""}>${s}</option>`).join("")}
+            </select>
+          </td>
+        </tr>
+      `).join("") : `
+        <tr>
+          <td colspan="9" style="text-align:center; color:#6b7280; padding:20px;">No jobs yet</td>
+        </tr>
+      `;
+
+      document.getElementById("kpiTotal").textContent = jobs.length;
+      document.getElementById("kpiDocs").textContent = jobs.filter(j => j.status === "Docs Pending").length;
+      document.getElementById("kpiDelivered").textContent = jobs.filter(j => j.status === "Delivered").length;
+
+      const today = new Date();
+      const in7 = new Date();
+      in7.setDate(today.getDate() + 7);
+
+      const soon = jobs.filter(j => {
+        if (!j.shipDate) return false;
+        const d = new Date(j.shipDate + "T00:00:00");
+        return d >= today && d <= in7;
+      }).length;
+
+      document.getElementById("kpiSoon").textContent = soon;
+    }
+
+    function addJob(){
+      const customer = document.getElementById("customer").value.trim();
+      const jobType = document.getElementById("jobType").value;
+      const product = document.getElementById("product").value;
+      const qty = document.getElementById("qty").value.trim();
+      const shipDate = document.getElementById("shipDate").value;
+      const status = document.getElementById("status").value;
+      const notes = document.getElementById("notes").value.trim();
+
+      if (!customer) {
+        alert("Please enter a customer");
+        return;
+      }
+
+      const jobs = getJobs();
+      const nextNum = jobs.length + 101;
+      const job = {
+        id: "JOB-" + nextNum,
+        customer,
+        jobType,
+        product,
+        qty,
+        shipDate,
+        status,
+        notes,
+        createdAt: new Date().toISOString()
+      };
+
+      jobs.unshift(job);
+      saveJobs(jobs);
+      clearForm();
+      render();
+    }
+
+    function clearForm(){
+      document.getElementById("customer").value = "";
+      document.getElementById("jobType").value = "Local Sale";
+      document.getElementById("product").value = "eFUME";
+      document.getElementById("qty").value = "";
+      document.getElementById("shipDate").value = "";
+      document.getElementById("status").value = "New";
+      document.getElementById("notes").value = "";
+    }
+
+    function updateStatus(id, value){
+      const jobs = getJobs();
+      const idx = jobs.findIndex(j => j.id === id);
+      if (idx >= 0){
+        jobs[idx].status = value;
+        saveJobs(jobs);
+        render();
+      }
+    }
+
+    function seedSampleData(){
+      const sample = [
+        {
+          id:"JOB-101",
+          customer:"Pharmochem",
+          jobType:"Export Sale",
+          product:"eFUME",
+          qty:"16 cylinders",
+          shipDate:"2026-04-08",
+          status:"Ready to Dispatch",
+          notes:"Auckland shipment",
+          createdAt:new Date().toISOString()
+        },
+        {
+          id:"JOB-102",
+          customer:"Local Customer",
+          jobType:"Local Sale",
+          product:"AQL",
+          qty:"4 drums",
+          shipDate:"2026-04-10",
+          status:"Planning",
+          notes:"Quote approved",
+          createdAt:new Date().toISOString()
+        },
+        {
+          id:"JOB-103",
+          customer:"Internal Transfer",
+          jobType:"Procurement",
+          product:"Equipment",
+          qty:"2 monitors",
+          shipDate:"2026-04-12",
+          status:"Docs Pending",
+          notes:"Internal movement",
+          createdAt:new Date().toISOString()
+        }
+      ];
+      saveJobs(sample);
+      render();
+    }
+
+    function exportData(){
+      const jobs = getJobs();
+      if (!jobs.length){
+        alert("No jobs to export yet");
+        return;
+      }
+      const headers = ["id","customer","jobType","product","qty","shipDate","status","notes","createdAt"];
+      const rows = [headers.join(",")].concat(
+        jobs.map(j => headers.map(h => `"${String(j[h] || "").replace(/"/g,'""')}"`).join(","))
+      );
+      const blob = new Blob([rows.join("\n")], {type:"text/csv;charset=utf-8;"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "ops-control-jobs.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    renderPills();
+    render();
+  </script>
+</body>
+</html>
