@@ -6,133 +6,272 @@
   <title>FlowControl</title>
   <style>
     :root{
-      --bg:#f4f7fb;
+      --bg:#eef4fb;
       --card:#ffffff;
-      --text:#1f2937;
-      --muted:#6b7280;
-      --line:#e5e7eb;
+      --card-2:#f8fbff;
+      --text:#142033;
+      --muted:#66758a;
+      --line:#dbe7f3;
       --blue:#2563eb;
+      --blue-2:#60a5fa;
+      --blue-3:#dbeafe;
+      --navy:#0f172a;
       --green:#16a34a;
       --amber:#d97706;
       --red:#dc2626;
-      --slate:#475569;
-      --softblue:#e0f2fe;
-      --softgreen:#dcfce7;
-      --softamber:#fef3c7;
-      --softred:#fee2e2;
-      --softslate:#f1f5f9;
+      --shadow:0 12px 32px rgba(15,23,42,.08);
+      --shadow-soft:0 8px 18px rgba(37,99,235,.15);
     }
+
     *{box-sizing:border-box}
+
     body{
       margin:0;
       font-family:Arial, Helvetica, sans-serif;
-      background:var(--bg);
+      background:
+        radial-gradient(circle at top left, rgba(96,165,250,.12), transparent 28%),
+        linear-gradient(180deg, #f4f8fd 0%, var(--bg) 100%);
       color:var(--text);
     }
+
     .wrap{
-      max-width:1400px;
+      max-width:1440px;
       margin:0 auto;
-      padding:24px;
+      padding:28px;
     }
+
     .topbar{
       display:flex;
       justify-content:space-between;
       align-items:flex-start;
-      gap:16px;
-      margin-bottom:20px;
+      gap:18px;
+      margin-bottom:22px;
       flex-wrap:wrap;
     }
+
+    .brand{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
     h1{
       margin:0;
-      font-size:32px;
+      font-size:38px;
+      font-weight:800;
+      letter-spacing:-0.04em;
+      color:var(--blue);
+      text-shadow:0 2px 14px rgba(37,99,235,.08);
     }
+
     .sub{
       color:var(--muted);
-      margin-top:6px;
-      max-width:850px;
+      max-width:860px;
+      font-size:16px;
+      line-height:1.5;
     }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
     .btn{
-      background:var(--blue);
+      background:linear-gradient(135deg, var(--blue), var(--blue-2));
       color:#fff;
       border:none;
-      border-radius:10px;
-      padding:12px 16px;
+      border-radius:14px;
+      padding:12px 18px;
       font-weight:700;
       cursor:pointer;
+      box-shadow:var(--shadow-soft);
+      transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;
     }
-    .btn:hover{opacity:.95}
+
+    .btn:hover{
+      transform:translateY(-1px);
+      opacity:.98;
+    }
+
     .btn.secondary{
       background:#fff;
       color:var(--text);
       border:1px solid var(--line);
+      box-shadow:none;
     }
+
     .grid{
       display:grid;
       grid-template-columns:repeat(4,1fr);
       gap:16px;
       margin-bottom:20px;
     }
+
     .card{
-      background:var(--card);
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:18px;
-      box-shadow:0 2px 10px rgba(0,0,0,.04);
+      background:linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
+      border:1px solid #e3edf7;
+      border-radius:22px;
+      padding:22px;
+      box-shadow:var(--shadow);
     }
+
+    .kpi-card{
+      position:relative;
+      overflow:hidden;
+    }
+
+    .kpi-card::after{
+      content:"";
+      position:absolute;
+      top:-25px;
+      right:-25px;
+      width:90px;
+      height:90px;
+      background:radial-gradient(circle, rgba(96,165,250,.20) 0%, rgba(96,165,250,0) 70%);
+      pointer-events:none;
+    }
+
     .card h3{
       margin:0 0 8px 0;
-      font-size:14px;
+      font-size:13px;
       color:var(--muted);
-      font-weight:600;
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:.06em;
     }
+
     .kpi{
-      font-size:28px;
+      font-size:34px;
       font-weight:800;
       margin:0;
+      letter-spacing:-0.04em;
     }
+
+    .kpi-sub{
+      margin-top:6px;
+      color:var(--muted);
+      font-size:13px;
+    }
+
     .row{
       display:grid;
-      grid-template-columns:2.15fr 1fr;
+      grid-template-columns:2.2fr 1fr;
       gap:16px;
       margin-bottom:20px;
     }
+
+    .section-title{
+      margin:0 0 14px 0;
+      font-size:20px;
+      font-weight:800;
+      letter-spacing:-0.02em;
+    }
+
     .toolbar{
       display:flex;
       gap:10px;
       flex-wrap:wrap;
       margin-bottom:14px;
     }
+
+    .tabs{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+
+    .tab{
+      border:1px solid var(--line);
+      background:#fff;
+      color:#334155;
+      border-radius:12px;
+      padding:10px 14px;
+      cursor:pointer;
+      font-weight:700;
+      transition:all .12s ease;
+    }
+
+    .tab.active{
+      background:linear-gradient(135deg, var(--blue), var(--blue-2));
+      color:#fff;
+      border-color:var(--blue);
+      box-shadow:0 8px 18px rgba(37,99,235,.18);
+    }
+
     input, select, textarea{
       width:100%;
-      padding:10px 12px;
+      padding:11px 13px;
       border:1px solid var(--line);
-      border-radius:10px;
+      border-radius:12px;
       font-size:14px;
       background:#fff;
+      color:var(--text);
+      outline:none;
     }
+
+    input:focus, select:focus, textarea:focus{
+      border-color:#9cc2ff;
+      box-shadow:0 0 0 4px rgba(96,165,250,.15);
+    }
+
     textarea{
-      min-height:88px;
+      min-height:92px;
       resize:vertical;
     }
+
+    .form-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+
+    label{
+      display:block;
+      font-size:13px;
+      font-weight:700;
+      color:#42546a;
+      margin-bottom:6px;
+    }
+
+    .table-wrap{
+      overflow:auto;
+      border:1px solid #e6eef7;
+      border-radius:16px;
+      background:#fff;
+    }
+
     table{
       width:100%;
       border-collapse:collapse;
       background:#fff;
       font-size:14px;
     }
+
     th, td{
       text-align:left;
       padding:12px 10px;
-      border-bottom:1px solid var(--line);
+      border-bottom:1px solid #edf2f7;
       vertical-align:top;
     }
+
     th{
       color:var(--muted);
       font-size:12px;
       text-transform:uppercase;
-      letter-spacing:.04em;
+      letter-spacing:.05em;
+      background:#f8fbff;
+      position:sticky;
+      top:0;
+      z-index:1;
       white-space:nowrap;
     }
+
+    tr:hover td{
+      background:#fbfdff;
+    }
+
     .badge{
       display:inline-block;
       padding:6px 10px;
@@ -141,127 +280,140 @@
       font-weight:700;
       white-space:nowrap;
     }
+
     .New,.Sent,.Approved,.Planning,.Dispatched,.Delivered,.Ready,.ReadytoDispatch,.Ready-to-Dispatch{
-      background:var(--softblue);
+      background:#e0f2fe;
       color:#075985;
     }
+
     .DocsPending{
-      background:var(--softamber);
+      background:#fef3c7;
       color:#92400e;
     }
+
     .Issue,.OnHold{
-      background:var(--softred);
+      background:#fee2e2;
       color:#991b1b;
     }
+
     .LocalSale,.ExportSale,.Procurement{
-      background:var(--softslate);
+      background:#f1f5f9;
       color:#334155;
     }
-    .section-title{
-      margin:0 0 14px 0;
-      font-size:18px;
-    }
-    .form-grid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:12px;
-    }
-    .small{
-      font-size:12px;
-      color:var(--muted);
-      margin-top:8px;
-    }
+
     .pill-row{
       display:flex;
       gap:8px;
       flex-wrap:wrap;
     }
+
     .pill{
-      background:#f8fafc;
+      background:#f8fbff;
       border:1px solid var(--line);
       border-radius:999px;
       padding:8px 12px;
       font-size:13px;
+      color:#3b4f65;
     }
+
+    .small{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:8px;
+      line-height:1.5;
+    }
+
     .footer-note{
       color:var(--muted);
       font-size:12px;
       margin-top:10px;
+      line-height:1.5;
     }
-    .tabs{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-bottom:14px;
-    }
-    .tab{
-      border:1px solid var(--line);
-      background:#fff;
-      color:var(--text);
-      border-radius:10px;
-      padding:10px 14px;
-      cursor:pointer;
-      font-weight:700;
-    }
-    .tab.active{
-      background:var(--blue);
-      color:#fff;
-      border-color:var(--blue);
-    }
+
     .status-select{
       min-width:140px;
     }
-    .table-wrap{
-      overflow:auto;
+
+    .header-strip{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:14px;
+      flex-wrap:wrap;
     }
+
+    .mini-tag{
+      font-size:12px;
+      color:#4f6780;
+      background:#eef6ff;
+      border:1px solid #d8e8fb;
+      padding:7px 10px;
+      border-radius:999px;
+      font-weight:700;
+    }
+
     @media (max-width: 1100px){
       .grid{grid-template-columns:repeat(2,1fr)}
       .row{grid-template-columns:1fr}
     }
+
     @media (max-width: 640px){
       .grid,.form-grid{grid-template-columns:1fr}
       .wrap{padding:14px}
-      h1{font-size:26px}
+      h1{font-size:30px}
+      .card{padding:18px}
     }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="topbar">
-      <div>
-        <h1 style="color:#2563eb;">FlowControl</h1>
+      <div class="brand">
+        <h1>FlowControl</h1>
         <div class="sub">
-          Your browser-based operations hub for procurement, export sales, local sales, shipment tracking, ETA visibility, and status control.
+          A clean control hub for procurement, export sales, local sales, shipment tracking, ETA visibility, and operational status - all in one place.
         </div>
       </div>
-      <div class="pill-row">
+
+      <div class="actions">
         <button class="btn secondary" onclick="exportData()">Export CSV</button>
         <button class="btn" onclick="seedSampleData()">Load Sample Data</button>
       </div>
     </div>
 
     <div class="grid">
-      <div class="card">
+      <div class="card kpi-card">
         <h3>Total Jobs</h3>
         <p class="kpi" id="kpiTotal">0</p>
+        <div class="kpi-sub">All current jobs in the system</div>
       </div>
-      <div class="card">
+
+      <div class="card kpi-card">
         <h3>Shipping Soon</h3>
         <p class="kpi" id="kpiSoon">0</p>
+        <div class="kpi-sub">ETA due in the next 7 days</div>
       </div>
-      <div class="card">
+
+      <div class="card kpi-card">
         <h3>Docs Pending</h3>
         <p class="kpi" id="kpiDocs">0</p>
+        <div class="kpi-sub">Jobs waiting on paperwork</div>
       </div>
-      <div class="card">
+
+      <div class="card kpi-card">
         <h3>Delivered</h3>
         <p class="kpi" id="kpiDelivered">0</p>
+        <div class="kpi-sub">Completed and closed jobs</div>
       </div>
     </div>
 
     <div class="row">
       <div class="card">
-        <h2 class="section-title">Jobs Dashboard</h2>
+        <div class="header-strip">
+          <h2 class="section-title">Jobs Dashboard</h2>
+          <div class="mini-tag">Live browser MVP</div>
+        </div>
 
         <div class="tabs">
           <button class="tab active" id="tabAll" onclick="setActiveTab('All')">All Jobs</button>
@@ -297,18 +449,22 @@
         </div>
 
         <div class="footer-note">
-          This version saves data in your browser on this device only. Next step can be online storage and document upload.
+          This version saves data in your browser on this device only. It is perfect for proving the concept and showing it off before adding document storage and deeper tracking features.
         </div>
       </div>
 
       <div class="card">
-        <h2 class="section-title">Add Job</h2>
+        <div class="header-strip">
+          <h2 class="section-title">Add Job</h2>
+          <div class="mini-tag">Fast entry</div>
+        </div>
 
         <div class="form-grid">
           <div>
             <label>Customer / Supplier</label>
             <input id="customer" placeholder="Name" />
           </div>
+
           <div>
             <label>Job Type</label>
             <select id="jobType" onchange="toggleTypeDefaults()">
@@ -329,6 +485,7 @@
               <option>AQL</option>
             </select>
           </div>
+
           <div>
             <label>Quantity</label>
             <input id="qty" placeholder="e.g. 16 cylinders" />
@@ -338,6 +495,7 @@
             <label>Ship Date</label>
             <input id="shipDate" type="date" />
           </div>
+
           <div>
             <label>ETA</label>
             <input id="eta" type="date" />
@@ -347,6 +505,7 @@
             <label>Carrier</label>
             <input id="carrier" placeholder="e.g. Toll, DHL, Mainfreight" />
           </div>
+
           <div>
             <label>Tracking / Connote No.</label>
             <input id="tracking" placeholder="Tracking number" />
@@ -379,19 +538,19 @@
           <button class="btn secondary" onclick="clearForm()">Clear</button>
         </div>
 
-        <div style="margin-top:20px;">
+        <div style="margin-top:22px;">
           <h2 class="section-title">Products</h2>
           <div class="pill-row" id="productList"></div>
-          <div class="small">You can add the full AQL product range later.</div>
+          <div class="small">You can add the full AQL range later.</div>
         </div>
 
-        <div style="margin-top:20px;">
+        <div style="margin-top:22px;">
           <h2 class="section-title">Statuses</h2>
           <div class="pill-row" id="statusList"></div>
-          <div class="small">We can change these on the fly as you use the system.</div>
+          <div class="small">These can be adjusted as the workflow evolves.</div>
         </div>
 
-        <div style="margin-top:20px;">
+        <div style="margin-top:22px;">
           <h2 class="section-title">Job Number Logic</h2>
           <div class="pill-row">
             <span class="pill">P-001 = Procurement</span>
@@ -404,7 +563,7 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "ops-control-jobs-v2";
+    const STORAGE_KEY = "flowcontrol-jobs-v3";
     let activeTab = "All";
 
     const products = ["eFUME","CO2","Ethyl Formate","Equipment","EDN","AQL"];
@@ -453,8 +612,7 @@
         if (!isNaN(num) && num > max) max = num;
       });
 
-      const next = String(max + 1).padStart(3, "0");
-      return `${prefix}-${next}`;
+      return `${prefix}-${String(max + 1).padStart(3, "0")}`;
     }
 
     function render(){
@@ -490,7 +648,7 @@
         </tr>
       `).join("") : `
         <tr>
-          <td colspan="12" style="text-align:center; color:#6b7280; padding:20px;">No jobs found</td>
+          <td colspan="12" style="text-align:center; color:#6b7280; padding:24px;">No jobs found</td>
         </tr>
       `;
 
@@ -500,6 +658,7 @@
 
       const today = new Date();
       today.setHours(0,0,0,0);
+
       const in7 = new Date();
       in7.setHours(0,0,0,0);
       in7.setDate(today.getDate() + 7);
@@ -517,9 +676,7 @@
       const jobType = document.getElementById("jobType").value;
       const statusEl = document.getElementById("status");
 
-      if (jobType === "Procurement"){
-        statusEl.value = "Planning";
-      } else if (jobType === "Export Sale"){
+      if (jobType === "Procurement" || jobType === "Export Sale"){
         statusEl.value = "Planning";
       } else {
         statusEl.value = "New";
@@ -655,7 +812,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "ops-control-jobs.csv";
+      a.download = "flowcontrol-jobs.csv";
       a.click();
       URL.revokeObjectURL(url);
     }
