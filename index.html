@@ -1,827 +1,841 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FlowControl</title>
-  <style>
-    :root{
-      --bg:#eef4fb;
-      --card:#ffffff;
-      --card-2:#f8fbff;
-      --text:#142033;
-      --muted:#66758a;
-      --line:#dbe7f3;
-      --blue:#2563eb;
-      --blue-2:#60a5fa;
-      --blue-3:#dbeafe;
-      --navy:#0f172a;
-      --green:#16a34a;
-      --amber:#d97706;
-      --red:#dc2626;
-      --shadow:0 12px 32px rgba(15,23,42,.08);
-      --shadow-soft:0 8px 18px rgba(37,99,235,.15);
-    }
+import React, { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import {
+  Truck,
+  Package,
+  Search,
+  Plus,
+  FileText,
+  MapPin,
+  CalendarDays,
+  CircleAlert,
+  CheckCircle2,
+  Clock3,
+  Pencil,
+  Save,
+  X,
+  Filter,
+  Boxes,
+  Route,
+  StickyNote,
+  PanelLeft,
+  Bell,
+  Sparkles,
+  Activity,
+  ArrowRight,
+  ShieldCheck,
+  Flag,
+  LayoutDashboard,
+  FolderOpen,
+  BarChart3,
+  Users,
+  Upload,
+  Paperclip,
+  ChevronRight,
+  TimerReset,
+  TrendingUp,
+  MoreHorizontal,
+  Building2,
+  Warehouse,
+  ListChecks,
+  Eye,
+  MessageSquare,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-    *{box-sizing:border-box}
+type JobStatus = "Pending" | "In Transit" | "Delivered" | "Issue";
+type JobPriority = "Low" | "Medium" | "High";
+type ViewMode = "cards" | "table";
 
-    body{
-      margin:0;
-      font-family:Arial, Helvetica, sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(96,165,250,.12), transparent 28%),
-        linear-gradient(180deg, #f4f8fd 0%, var(--bg) 100%);
-      color:var(--text);
-    }
+type Job = {
+  id: string;
+  client: string;
+  origin: string;
+  destination: string;
+  status: JobStatus;
+  driver: string;
+  dueDate: string;
+  reference: string;
+  notes: string;
+  createdAt: string;
+  priority: JobPriority;
+  lastUpdated: string;
+  attachmentCount: number;
+  activity: string[];
+};
 
-    .wrap{
-      max-width:1440px;
-      margin:0 auto;
-      padding:28px;
-    }
+const initialJobs: Job[] = [
+  {
+    id: "FC-2401",
+    client: "Greenway Turf",
+    origin: "Sunshine West",
+    destination: "Werribee",
+    status: "In Transit",
+    driver: "Sam",
+    dueDate: "2026-03-28",
+    reference: "GT-7782",
+    notes: "Customer requested delivery before 2 PM. Call on approach.",
+    createdAt: "2026-03-26",
+    priority: "High",
+    lastUpdated: "2026-03-27 08:45",
+    attachmentCount: 2,
+    activity: [
+      "Job created by office team",
+      "Driver assigned to Sam",
+      "Customer delivery note added",
+      "Status changed to In Transit",
+    ],
+  },
+  {
+    id: "FC-2402",
+    client: "Multihub Warehouse",
+    origin: "Brooklyn",
+    destination: "Dandenong South",
+    status: "Pending",
+    driver: "Nat",
+    dueDate: "2026-03-29",
+    reference: "MH-1148",
+    notes: "Awaiting final pick confirmation and forklift availability.",
+    createdAt: "2026-03-26",
+    priority: "Medium",
+    lastUpdated: "2026-03-27 09:10",
+    attachmentCount: 1,
+    activity: [
+      "Job created by dispatch",
+      "Pickup window requested",
+      "Awaiting confirmation from warehouse",
+    ],
+  },
+  {
+    id: "FC-2403",
+    client: "Pharmochem",
+    origin: "Auckland",
+    destination: "Sunshine West",
+    status: "Issue",
+    driver: "Paul",
+    dueDate: "2026-03-30",
+    reference: "PH-9021",
+    notes: "Manifest mismatch flagged. Hold until paperwork is checked.",
+    createdAt: "2026-03-25",
+    priority: "High",
+    lastUpdated: "2026-03-27 07:55",
+    attachmentCount: 3,
+    activity: [
+      "Import job created",
+      "Manifest uploaded",
+      "Mismatch found in paperwork",
+      "Status moved to Issue",
+    ],
+  },
+  {
+    id: "FC-2404",
+    client: "Supagas",
+    origin: "Adelaide",
+    destination: "Sunshine West",
+    status: "Delivered",
+    driver: "Keith",
+    dueDate: "2026-03-27",
+    reference: "SG-6504",
+    notes: "Delivered complete. Dockets uploaded by office.",
+    createdAt: "2026-03-24",
+    priority: "Low",
+    lastUpdated: "2026-03-27 10:20",
+    attachmentCount: 4,
+    activity: [
+      "Job created",
+      "Dispatch completed",
+      "Delivery confirmed",
+      "Dockets uploaded to record",
+    ],
+  },
+];
 
-    .topbar{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:18px;
-      margin-bottom:22px;
-      flex-wrap:wrap;
-    }
+const statusStyles: Record<JobStatus, string> = {
+  Pending: "bg-amber-400/15 text-amber-200 border-amber-300/20",
+  "In Transit": "bg-sky-400/15 text-sky-200 border-sky-300/20",
+  Delivered: "bg-emerald-400/20 text-emerald-200 border-emerald-300/20",
+  Issue: "bg-red-400/15 text-red-200 border-red-300/20",
+};
 
-    .brand{
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-    }
+const priorityStyles: Record<JobPriority, string> = {
+  Low: "bg-white/10 text-slate-200 border-white/10",
+  Medium: "bg-violet-400/15 text-violet-200 border-violet-300/20",
+  High: "bg-rose-400/15 text-rose-200 border-rose-300/20",
+};
 
-    h1{
-      margin:0;
-      font-size:38px;
-      font-weight:800;
-      letter-spacing:-0.04em;
-      color:var(--blue);
-      text-shadow:0 2px 14px rgba(37,99,235,.08);
-    }
+const navItems = [
+  { label: "Dashboard", icon: LayoutDashboard, active: true },
+  { label: "Jobs", icon: Boxes, active: false },
+  { label: "Documents", icon: FolderOpen, active: false },
+  { label: "Customers", icon: Users, active: false },
+  { label: "Reporting", icon: BarChart3, active: false },
+];
 
-    .sub{
-      color:var(--muted);
-      max-width:860px;
-      font-size:16px;
-      line-height:1.5;
-    }
+const kpiTrends = [
+  { label: "On-time ETA", value: "+8.4%", icon: TrendingUp },
+  { label: "Docs cleared", value: "+12%", icon: ShieldCheck },
+  { label: "Open exceptions", value: "-2", icon: TimerReset },
+  { label: "Driver updates", value: "+6", icon: MessageSquare },
+];
 
-    .actions{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-    }
+const statusIcon = (status: JobStatus) => {
+  switch (status) {
+    case "Pending":
+      return <Clock3 className="h-4 w-4" />;
+    case "In Transit":
+      return <Truck className="h-4 w-4" />;
+    case "Delivered":
+      return <CheckCircle2 className="h-4 w-4" />;
+    case "Issue":
+      return <CircleAlert className="h-4 w-4" />;
+  }
+};
 
-    .btn{
-      background:linear-gradient(135deg, var(--blue), var(--blue-2));
-      color:#fff;
-      border:none;
-      border-radius:14px;
-      padding:12px 18px;
-      font-weight:700;
-      cursor:pointer;
-      box-shadow:var(--shadow-soft);
-      transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;
-    }
-
-    .btn:hover{
-      transform:translateY(-1px);
-      opacity:.98;
-    }
-
-    .btn.secondary{
-      background:#fff;
-      color:var(--text);
-      border:1px solid var(--line);
-      box-shadow:none;
-    }
-
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(4,1fr);
-      gap:16px;
-      margin-bottom:20px;
-    }
-
-    .card{
-      background:linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
-      border:1px solid #e3edf7;
-      border-radius:22px;
-      padding:22px;
-      box-shadow:var(--shadow);
-    }
-
-    .kpi-card{
-      position:relative;
-      overflow:hidden;
-    }
-
-    .kpi-card::after{
-      content:"";
-      position:absolute;
-      top:-25px;
-      right:-25px;
-      width:90px;
-      height:90px;
-      background:radial-gradient(circle, rgba(96,165,250,.20) 0%, rgba(96,165,250,0) 70%);
-      pointer-events:none;
-    }
-
-    .card h3{
-      margin:0 0 8px 0;
-      font-size:13px;
-      color:var(--muted);
-      font-weight:700;
-      text-transform:uppercase;
-      letter-spacing:.06em;
-    }
-
-    .kpi{
-      font-size:34px;
-      font-weight:800;
-      margin:0;
-      letter-spacing:-0.04em;
-    }
-
-    .kpi-sub{
-      margin-top:6px;
-      color:var(--muted);
-      font-size:13px;
-    }
-
-    .row{
-      display:grid;
-      grid-template-columns:2.2fr 1fr;
-      gap:16px;
-      margin-bottom:20px;
-    }
-
-    .section-title{
-      margin:0 0 14px 0;
-      font-size:20px;
-      font-weight:800;
-      letter-spacing:-0.02em;
-    }
-
-    .toolbar{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-bottom:14px;
-    }
-
-    .tabs{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-bottom:14px;
-    }
-
-    .tab{
-      border:1px solid var(--line);
-      background:#fff;
-      color:#334155;
-      border-radius:12px;
-      padding:10px 14px;
-      cursor:pointer;
-      font-weight:700;
-      transition:all .12s ease;
-    }
-
-    .tab.active{
-      background:linear-gradient(135deg, var(--blue), var(--blue-2));
-      color:#fff;
-      border-color:var(--blue);
-      box-shadow:0 8px 18px rgba(37,99,235,.18);
-    }
-
-    input, select, textarea{
-      width:100%;
-      padding:11px 13px;
-      border:1px solid var(--line);
-      border-radius:12px;
-      font-size:14px;
-      background:#fff;
-      color:var(--text);
-      outline:none;
-    }
-
-    input:focus, select:focus, textarea:focus{
-      border-color:#9cc2ff;
-      box-shadow:0 0 0 4px rgba(96,165,250,.15);
-    }
-
-    textarea{
-      min-height:92px;
-      resize:vertical;
-    }
-
-    .form-grid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:12px;
-    }
-
-    label{
-      display:block;
-      font-size:13px;
-      font-weight:700;
-      color:#42546a;
-      margin-bottom:6px;
-    }
-
-    .table-wrap{
-      overflow:auto;
-      border:1px solid #e6eef7;
-      border-radius:16px;
-      background:#fff;
-    }
-
-    table{
-      width:100%;
-      border-collapse:collapse;
-      background:#fff;
-      font-size:14px;
-    }
-
-    th, td{
-      text-align:left;
-      padding:12px 10px;
-      border-bottom:1px solid #edf2f7;
-      vertical-align:top;
-    }
-
-    th{
-      color:var(--muted);
-      font-size:12px;
-      text-transform:uppercase;
-      letter-spacing:.05em;
-      background:#f8fbff;
-      position:sticky;
-      top:0;
-      z-index:1;
-      white-space:nowrap;
-    }
-
-    tr:hover td{
-      background:#fbfdff;
-    }
-
-    .badge{
-      display:inline-block;
-      padding:6px 10px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:700;
-      white-space:nowrap;
-    }
-
-    .New,.Sent,.Approved,.Planning,.Dispatched,.Delivered,.Ready,.ReadytoDispatch,.Ready-to-Dispatch{
-      background:#e0f2fe;
-      color:#075985;
-    }
-
-    .DocsPending{
-      background:#fef3c7;
-      color:#92400e;
-    }
-
-    .Issue,.OnHold{
-      background:#fee2e2;
-      color:#991b1b;
-    }
-
-    .LocalSale,.ExportSale,.Procurement{
-      background:#f1f5f9;
-      color:#334155;
-    }
-
-    .pill-row{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-    }
-
-    .pill{
-      background:#f8fbff;
-      border:1px solid var(--line);
-      border-radius:999px;
-      padding:8px 12px;
-      font-size:13px;
-      color:#3b4f65;
-    }
-
-    .small{
-      font-size:12px;
-      color:var(--muted);
-      margin-top:8px;
-      line-height:1.5;
-    }
-
-    .footer-note{
-      color:var(--muted);
-      font-size:12px;
-      margin-top:10px;
-      line-height:1.5;
-    }
-
-    .status-select{
-      min-width:140px;
-    }
-
-    .header-strip{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      margin-bottom:14px;
-      flex-wrap:wrap;
-    }
-
-    .mini-tag{
-      font-size:12px;
-      color:#4f6780;
-      background:#eef6ff;
-      border:1px solid #d8e8fb;
-      padding:7px 10px;
-      border-radius:999px;
-      font-weight:700;
-    }
-
-    @media (max-width: 1100px){
-      .grid{grid-template-columns:repeat(2,1fr)}
-      .row{grid-template-columns:1fr}
-    }
-
-    @media (max-width: 640px){
-      .grid,.form-grid{grid-template-columns:1fr}
-      .wrap{padding:14px}
-      h1{font-size:30px}
-      .card{padding:18px}
-    }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="topbar">
-      <div class="brand">
-        <div style="display:flex; align-items:center; gap:12px;">
-  <img src="logo.png" style="height:42px;">
-  <h1 style="margin:0; color:white;">FlowControl</h1>
-</div>
-        <div class="sub">
-          A clean control hub for procurement, export sales, local sales, shipment tracking, ETA visibility, and operational status - all in one place.
+function StatCard({
+  title,
+  value,
+  subtitle,
+  icon,
+}: {
+  title: string;
+  value: string | number;
+  subtitle: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <Card className="border border-white/10 bg-white/8 shadow-[0_10px_50px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm text-slate-300">{title}</p>
+            <p className="mt-2 text-3xl font-semibold tracking-tight text-white">{value}</p>
+            <p className="mt-1 text-sm text-slate-400">{subtitle}</p>
+          </div>
+          <div className="rounded-2xl bg-white/10 p-3 text-white">{icon}</div>
         </div>
-      </div>
+      </CardContent>
+    </Card>
+  );
+}
 
-      <div class="actions">
-        <button class="btn secondary" onclick="exportData()">Export CSV</button>
-        <button class="btn" onclick="seedSampleData()">Load Sample Data</button>
+export default function FlowControlApp() {
+  const [jobs, setJobs] = useState<Job[]>(() => {
+    if (typeof window === "undefined") return initialJobs;
+    const saved = window.localStorage.getItem("flowcontrol-jobs-v2");
+    return saved ? JSON.parse(saved) : initialJobs;
+  });
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState<string>("All");
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [draftNote, setDraftNote] = useState("");
+  const [viewMode, setViewMode] = useState<ViewMode>("cards");
+  const [selectedJobId, setSelectedJobId] = useState<string>(initialJobs[0].id);
+  const [newJob, setNewJob] = useState<Job>({
+    id: `FC-${Math.floor(1000 + Math.random() * 9000)}`,
+    client: "",
+    origin: "",
+    destination: "",
+    status: "Pending",
+    driver: "",
+    dueDate: "",
+    reference: "",
+    notes: "",
+    createdAt: new Date().toISOString().split("T")[0],
+    priority: "Medium",
+    lastUpdated: new Date().toLocaleString(),
+    attachmentCount: 0,
+    activity: ["Job created"],
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("flowcontrol-jobs-v2", JSON.stringify(jobs));
+    }
+  }, [jobs]);
+
+  useEffect(() => {
+    if (!jobs.find((job) => job.id === selectedJobId) && jobs.length > 0) {
+      setSelectedJobId(jobs[0].id);
+    }
+  }, [jobs, selectedJobId]);
+
+  const filteredJobs = useMemo(() => {
+    return jobs.filter((job) => {
+      const matchesSearch = [
+        job.id,
+        job.client,
+        job.origin,
+        job.destination,
+        job.driver,
+        job.reference,
+        job.notes,
+        job.priority,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(search.toLowerCase());
+
+      const matchesStatus = filterStatus === "All" ? true : job.status === filterStatus;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [jobs, search, filterStatus]);
+
+  const selectedJob = useMemo(
+    () => filteredJobs.find((job) => job.id === selectedJobId) || filteredJobs[0] || null,
+    [filteredJobs, selectedJobId]
+  );
+
+  const stats = useMemo(() => {
+    const pending = jobs.filter((j) => j.status === "Pending").length;
+    const transit = jobs.filter((j) => j.status === "In Transit").length;
+    const delivered = jobs.filter((j) => j.status === "Delivered").length;
+    const issues = jobs.filter((j) => j.status === "Issue").length;
+    return { pending, transit, delivered, issues };
+  }, [jobs]);
+
+  const urgentCount = useMemo(
+    () => jobs.filter((j) => j.priority === "High" || j.status === "Issue").length,
+    [jobs]
+  );
+
+  const docPending = useMemo(
+    () => jobs.filter((j) => j.status === "Issue" || j.attachmentCount < 2).length,
+    [jobs]
+  );
+
+  const createJob = () => {
+    if (!newJob.client || !newJob.origin || !newJob.destination) return;
+    const created = {
+      ...newJob,
+      lastUpdated: new Date().toLocaleString(),
+      activity: ["Job created", ...(newJob.notes ? ["Initial notes added"] : [])],
+    };
+    setJobs((prev) => [created, ...prev]);
+    setSelectedJobId(created.id);
+    setNewJob({
+      id: `FC-${Math.floor(1000 + Math.random() * 9000)}`,
+      client: "",
+      origin: "",
+      destination: "",
+      status: "Pending",
+      driver: "",
+      dueDate: "",
+      reference: "",
+      notes: "",
+      createdAt: new Date().toISOString().split("T")[0],
+      priority: "Medium",
+      lastUpdated: new Date().toLocaleString(),
+      attachmentCount: 0,
+      activity: ["Job created"],
+    });
+    setIsCreateOpen(false);
+  };
+
+  const openNoteEditor = (job: Job) => {
+    setSelectedJobId(job.id);
+    setEditingNoteId(job.id);
+    setDraftNote(job.notes || "");
+  };
+
+  const saveNote = (jobId: string) => {
+    setJobs((prev) =>
+      prev.map((job) =>
+        job.id === jobId
+          ? {
+              ...job,
+              notes: draftNote,
+              lastUpdated: new Date().toLocaleString(),
+              activity: ["Notes updated", ...job.activity].slice(0, 6),
+            }
+          : job
+      )
+    );
+    setEditingNoteId(null);
+    setDraftNote("");
+  };
+
+  const deleteJob = (jobId: string) => {
+    setJobs((prev) => prev.filter((job) => job.id !== jobId));
+  };
+
+  const updateStatus = (jobId: string, status: JobStatus) => {
+    setJobs((prev) =>
+      prev.map((job) =>
+        job.id === jobId
+          ? {
+              ...job,
+              status,
+              lastUpdated: new Date().toLocaleString(),
+              activity: [`Status changed to ${status}`, ...job.activity].slice(0, 6),
+            }
+          : job
+      )
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.24),_transparent_25%),radial-gradient(circle_at_top_right,_rgba(168,85,247,0.16),_transparent_22%),linear-gradient(180deg,_#050816_0%,_#0b1220_45%,_#0f172a_100%)] text-white">
+      <div className="mx-auto max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8">
+        <div className="grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
+          <aside className="rounded-[32px] border border-white/10 bg-slate-950/70 p-5 shadow-[0_20px_80px_rgba(0,0,0,0.45)] backdrop-blur-2xl xl:sticky xl:top-6 xl:h-[calc(100vh-48px)]">
+            <div className="flex items-center gap-3 border-b border-white/10 pb-5">
+              <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-lg">
+                <img
+                  src="logo.png"
+                  alt="FlowControl logo"
+                  className="h-11 w-11 object-contain"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.25em] text-sky-300">FlowControl</p>
+                <h1 className="text-xl font-semibold text-white">Operations Hub</h1>
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-2">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.label}
+                    className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left transition ${
+                      item.active
+                        ? "bg-gradient-to-r from-sky-500/20 to-violet-500/15 text-white ring-1 ring-sky-400/20"
+                        : "bg-white/0 text-slate-300 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    <span className="flex items-center gap-3">
+                      <Icon className="h-4 w-4" />
+                      {item.label}
+                    </span>
+                    <ChevronRight className="h-4 w-4 opacity-60" />
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-4">
+              <p className="text-sm text-slate-300">Quick actions</p>
+              <div className="mt-4 space-y-2">
+                <Button className="w-full justify-start rounded-2xl bg-white text-slate-950 hover:bg-slate-100">
+                  <Plus className="mr-2 h-4 w-4" />
+                  New job
+                </Button>
+                <Button variant="outline" className="w-full justify-start rounded-2xl border-white/10 bg-white/5 text-white hover:bg-white/10">
+                  <Upload className="mr-2 h-4 w-4" />
+                  Upload docs
+                </Button>
+                <Button variant="outline" className="w-full justify-start rounded-2xl border-white/10 bg-white/5 text-white hover:bg-white/10">
+                  <BarChart3 className="mr-2 h-4 w-4" />
+                  Export report
+                </Button>
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-3xl border border-violet-300/15 bg-violet-400/10 p-4">
+              <div className="flex items-center gap-2 text-violet-100">
+                <Sparkles className="h-4 w-4" />
+                <span className="text-sm font-medium">Professional mode active</span>
+              </div>
+              <p className="mt-2 text-sm leading-6 text-slate-300">
+                Branded layout, KPI trends, activity feed, notes, and document visibility are all built in.
+              </p>
+            </div>
+          </aside>
+
+          <main className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="overflow-hidden rounded-[32px] border border-white/10 bg-gradient-to-r from-slate-900/95 via-slate-900/80 to-sky-950/70 shadow-[0_20px_80px_rgba(0,0,0,0.45)] backdrop-blur-2xl"
+            >
+              <div className="grid gap-6 p-6 lg:grid-cols-[1.3fr_0.7fr] lg:p-8">
+                <div>
+                  <div className="mb-4 flex items-center justify-between gap-4">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-slate-200">
+                      <Sparkles className="h-3.5 w-3.5" />
+                      Premium operations view
+                    </div>
+                    <div className="hidden items-center gap-2 md:flex">
+                      <div className="rounded-full border border-white/10 bg-white/5 p-2 text-slate-200">
+                        <Bell className="h-4 w-4" />
+                      </div>
+                      <div className="rounded-full border border-white/10 bg-white/5 p-2 text-slate-200">
+                        <PanelLeft className="h-4 w-4" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">FlowControl</h2>
+                  <p className="mt-3 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
+                    A polished control hub for freight, dispatch, local sales, export jobs, documents, job notes, and live operational visibility.
+                  </p>
+
+                  <div className="mt-5 flex flex-wrap gap-3 text-sm text-slate-300">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2">
+                      <ShieldCheck className="h-4 w-4 text-emerald-300" />
+                      Cleaner job control
+                    </div>
+                    <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2">
+                      <Activity className="h-4 w-4 text-sky-300" />
+                      Better visibility
+                    </div>
+                    <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2">
+                      <StickyNote className="h-4 w-4 text-violet-300" />
+                      Notes built into every job
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex flex-wrap gap-3">
+                    <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                      <DialogTrigger asChild>
+                        <Button className="rounded-2xl bg-white text-slate-950 hover:bg-slate-100">
+                          <Plus className="mr-2 h-4 w-4" />
+                          Create Job
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="border-white/10 bg-slate-950 text-white sm:max-w-2xl">
+                        <DialogHeader>
+                          <DialogTitle>Create New Job</DialogTitle>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-2 sm:grid-cols-2">
+                          <Input placeholder="Client" value={newJob.client} onChange={(e) => setNewJob({ ...newJob, client: e.target.value })} className="border-white/10 bg-white/5" />
+                          <Input placeholder="Driver" value={newJob.driver} onChange={(e) => setNewJob({ ...newJob, driver: e.target.value })} className="border-white/10 bg-white/5" />
+                          <Input placeholder="Origin" value={newJob.origin} onChange={(e) => setNewJob({ ...newJob, origin: e.target.value })} className="border-white/10 bg-white/5" />
+                          <Input placeholder="Destination" value={newJob.destination} onChange={(e) => setNewJob({ ...newJob, destination: e.target.value })} className="border-white/10 bg-white/5" />
+                          <Input type="date" value={newJob.dueDate} onChange={(e) => setNewJob({ ...newJob, dueDate: e.target.value })} className="border-white/10 bg-white/5" />
+                          <Input placeholder="Reference" value={newJob.reference} onChange={(e) => setNewJob({ ...newJob, reference: e.target.value })} className="border-white/10 bg-white/5" />
+                          <Select value={newJob.priority} onValueChange={(value: JobPriority) => setNewJob({ ...newJob, priority: value })}>
+                            <SelectTrigger className="border-white/10 bg-white/5 text-white">
+                              <SelectValue placeholder="Priority" />
+                            </SelectTrigger>
+                            <SelectContent className="border-white/10 bg-slate-950 text-white">
+                              <SelectItem value="Low">Low Priority</SelectItem>
+                              <SelectItem value="Medium">Medium Priority</SelectItem>
+                              <SelectItem value="High">High Priority</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <div className="sm:col-span-2">
+                            <Textarea placeholder="Job notes" value={newJob.notes} onChange={(e) => setNewJob({ ...newJob, notes: e.target.value })} className="min-h-[120px] border-white/10 bg-white/5" />
+                          </div>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
+                          <Button onClick={createJob} className="rounded-2xl bg-white text-slate-950 hover:bg-slate-100">Save Job</Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                    <Button variant="outline" className="rounded-2xl border-white/15 bg-white/5 text-white hover:bg-white/10">
+                      <FileText className="mr-2 h-4 w-4" />
+                      Export View
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+                  <Card className="border border-white/10 bg-white/8 shadow-[0_10px_50px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+                    <CardContent className="flex items-center justify-between p-5">
+                      <div>
+                        <p className="text-sm text-slate-300">Live jobs</p>
+                        <p className="mt-2 text-3xl font-semibold">{jobs.length}</p>
+                      </div>
+                      <div className="rounded-2xl bg-white/10 p-3"><Boxes className="h-6 w-6" /></div>
+                    </CardContent>
+                  </Card>
+                  <Card className="border border-white/10 bg-white/8 shadow-[0_10px_50px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+                    <CardContent className="flex items-center justify-between p-5">
+                      <div>
+                        <p className="text-sm text-slate-300">Urgent attention</p>
+                        <p className="mt-2 text-3xl font-semibold">{urgentCount}</p>
+                      </div>
+                      <div className="rounded-2xl bg-white/10 p-3"><Flag className="h-6 w-6" /></div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            </motion.div>
+
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <StatCard title="Pending" value={stats.pending} subtitle="Ready to dispatch" icon={<Clock3 className="h-5 w-5" />} />
+              <StatCard title="In Transit" value={stats.transit} subtitle="Currently moving" icon={<Truck className="h-5 w-5" />} />
+              <StatCard title="Delivered" value={stats.delivered} subtitle="Completed jobs" icon={<CheckCircle2 className="h-5 w-5" />} />
+              <StatCard title="Docs Pending" value={docPending} subtitle="Needs paperwork review" icon={<FolderOpen className="h-5 w-5" />} />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {kpiTrends.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Card key={item.label} className="border border-white/10 bg-white/8 shadow-[0_10px_50px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+                    <CardContent className="flex items-center justify-between p-4">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{item.label}</p>
+                        <p className="mt-2 text-xl font-semibold text-white">{item.value}</p>
+                      </div>
+                      <div className="rounded-2xl bg-white/10 p-3 text-slate-100"><Icon className="h-5 w-5" /></div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            <div className="grid gap-6 2xl:grid-cols-[1.2fr_1.6fr_1fr]">
+              <Card className="border border-white/10 bg-white/8 shadow-[0_10px_50px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+                <CardHeader>
+                  <div className="flex items-center justify-between gap-3">
+                    <CardTitle className="text-xl text-white">Controls</CardTitle>
+                    <div className="inline-flex rounded-2xl border border-white/10 bg-white/5 p-1">
+                      <button onClick={() => setViewMode("cards")} className={`rounded-xl px-3 py-1.5 text-sm ${viewMode === "cards" ? "bg-white text-slate-950" : "text-slate-300"}`}>Cards</button>
+                      <button onClick={() => setViewMode("table")} className={`rounded-xl px-3 py-1.5 text-sm ${viewMode === "table" ? "bg-white text-slate-950" : "text-slate-300"}`}>Table</button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Input placeholder="Search jobs, drivers, notes..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-11 rounded-2xl border-white/10 bg-white/5 pl-10 text-white" />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="flex items-center gap-2 text-sm text-slate-300"><Filter className="h-4 w-4" />Status</p>
+                    <Select value={filterStatus} onValueChange={setFilterStatus}>
+                      <SelectTrigger className="h-11 rounded-2xl border-white/10 bg-white/5 text-white"><SelectValue placeholder="Filter by status" /></SelectTrigger>
+                      <SelectContent className="border-white/10 bg-slate-950 text-white">
+                        <SelectItem value="All">All</SelectItem>
+                        <SelectItem value="Pending">Pending</SelectItem>
+                        <SelectItem value="In Transit">In Transit</SelectItem>
+                        <SelectItem value="Delivered">Delivered</SelectItem>
+                        <SelectItem value="Issue">Issue</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                    <p className="text-sm text-slate-300">Operations Summary</p>
+                    <div className="mt-4 space-y-3 text-sm">
+                      <div className="flex items-center justify-between text-slate-300"><span>Today’s dispatch focus</span><span className="font-medium text-white">{stats.pending + stats.transit} jobs</span></div>
+                      <div className="flex items-center justify-between text-slate-300"><span>Completed today</span><span className="font-medium text-white">{stats.delivered}</span></div>
+                      <div className="flex items-center justify-between text-slate-300"><span>Exceptions logged</span><span className="font-medium text-white">{stats.issues}</span></div>
+                    </div>
+                  </div>
+                  <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm text-slate-300">Document upload area</p>
+                        <p className="mt-1 text-xs text-slate-400">Ready for future file integration</p>
+                      </div>
+                      <Upload className="h-5 w-5 text-slate-300" />
+                    </div>
+                    <div className="mt-4 rounded-2xl border border-dashed border-white/15 bg-slate-950/30 p-4 text-center text-sm text-slate-400">
+                      Drop invoices, PODs, dockets, SDS, or shipping docs here later
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="space-y-4">
+                <Card className="border border-white/10 bg-white/8 shadow-[0_10px_50px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+                  <CardContent className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="text-sm text-slate-300">Notes and updates are fully built into every job card.</p>
+                      <p className="mt-1 text-lg font-semibold text-white">Open a job, edit the notes, save, and the update stays attached to that job.</p>
+                    </div>
+                    <div className="inline-flex items-center gap-2 rounded-2xl border border-violet-300/20 bg-violet-400/10 px-4 py-3 text-sm text-violet-100">
+                      <StickyNote className="h-4 w-4" />
+                      Note function active
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {viewMode === "cards" ? (
+                  filteredJobs.map((job, index) => (
+                    <motion.div key={job.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
+                      <Card className={`overflow-hidden border shadow-[0_10px_50px_rgba(0,0,0,0.28)] backdrop-blur-xl ${selectedJob?.id === job.id ? "border-sky-400/30 bg-sky-500/10" : "border-white/10 bg-white/8"}`}>
+                        <CardContent className="p-0">
+                          <div className="border-b border-white/10 p-5" onClick={() => setSelectedJobId(job.id)}>
+                            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                              <div>
+                                <div className="flex flex-wrap items-center gap-3">
+                                  <h3 className="text-xl font-semibold tracking-tight text-white">{job.client}</h3>
+                                  <Badge className={`rounded-full border ${statusStyles[job.status]}`}><span className="mr-1">{statusIcon(job.status)}</span>{job.status}</Badge>
+                                  <Badge className={`rounded-full border ${priorityStyles[job.priority]}`}>{job.priority} Priority</Badge>
+                                  <Badge variant="outline" className="rounded-full border-white/10 bg-white/5 text-slate-200">{job.id}</Badge>
+                                </div>
+                                <p className="mt-2 text-sm text-slate-400">Reference: {job.reference || "-"}</p>
+                                <p className="mt-1 text-xs text-slate-500">Last updated: {job.lastUpdated}</p>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                <Select value={job.status} onValueChange={(value: JobStatus) => updateStatus(job.id, value)}>
+                                  <SelectTrigger className="w-[160px] rounded-2xl border-white/10 bg-white/5 text-white"><SelectValue /></SelectTrigger>
+                                  <SelectContent className="border-white/10 bg-slate-950 text-white">
+                                    <SelectItem value="Pending">Pending</SelectItem>
+                                    <SelectItem value="In Transit">In Transit</SelectItem>
+                                    <SelectItem value="Delivered">Delivered</SelectItem>
+                                    <SelectItem value="Issue">Issue</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <Button variant="outline" className="rounded-2xl border-white/10 bg-white/5 text-white hover:bg-white/10" onClick={() => openNoteEditor(job)}><Pencil className="mr-2 h-4 w-4" />Edit Notes</Button>
+                                <Button variant="ghost" className="rounded-2xl text-slate-300 hover:bg-white/10 hover:text-white" onClick={() => deleteJob(job.id)}><X className="mr-2 h-4 w-4" />Remove</Button>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-4">
+                            <div className="rounded-2xl bg-white/5 p-4"><p className="mb-2 flex items-center gap-2 text-sm text-slate-300"><MapPin className="h-4 w-4" />Route</p><p className="text-sm font-medium text-white">{job.origin}</p><p className="my-1 text-xs uppercase tracking-[0.2em] text-slate-500">to</p><p className="text-sm font-medium text-white">{job.destination}</p></div>
+                            <div className="rounded-2xl bg-white/5 p-4"><p className="mb-2 flex items-center gap-2 text-sm text-slate-300"><Truck className="h-4 w-4" />Driver</p><p className="text-sm font-medium text-white">{job.driver || "Unassigned"}</p></div>
+                            <div className="rounded-2xl bg-white/5 p-4"><p className="mb-2 flex items-center gap-2 text-sm text-slate-300"><CalendarDays className="h-4 w-4" />Due Date</p><p className="text-sm font-medium text-white">{job.dueDate || "Not set"}</p></div>
+                            <div className="rounded-2xl bg-white/5 p-4"><p className="mb-2 flex items-center gap-2 text-sm text-slate-300"><Paperclip className="h-4 w-4" />Documents</p><p className="text-sm font-medium text-white">{job.attachmentCount} attached</p></div>
+                          </div>
+                          <div className="border-t border-white/10 p-5">
+                            <div className="rounded-2xl bg-white/5 p-4">
+                              <p className="mb-2 flex items-center gap-2 text-sm text-slate-300"><StickyNote className="h-4 w-4" />Job Notes and Updates</p>
+                              {editingNoteId === job.id ? (
+                                <div className="space-y-3">
+                                  <Textarea value={draftNote} onChange={(e) => setDraftNote(e.target.value)} className="min-h-[110px] rounded-2xl border-white/10 bg-slate-950/60 text-white" />
+                                  <div className="flex gap-2">
+                                    <Button onClick={() => saveNote(job.id)} className="rounded-2xl bg-white text-slate-950 hover:bg-slate-100"><Save className="mr-2 h-4 w-4" />Save Notes</Button>
+                                    <Button variant="outline" className="rounded-2xl border-white/10 bg-white/5 text-white hover:bg-white/10" onClick={() => { setEditingNoteId(null); setDraftNote(""); }}><X className="mr-2 h-4 w-4" />Cancel</Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div>
+                                  <p className="text-sm leading-7 text-slate-200">{job.notes || "No notes added yet. Click Edit Notes to add job-specific updates, delivery comments, paperwork reminders, or hold notes."}</p>
+                                  <div className="mt-3 inline-flex items-center gap-2 text-xs text-slate-400"><ArrowRight className="h-3.5 w-3.5" />Notes stay on the job and can be updated any time</div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))
+                ) : (
+                  <Card className="overflow-hidden border border-white/10 bg-white/8 shadow-[0_10px_50px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full text-left">
+                        <thead className="border-b border-white/10 bg-white/5 text-xs uppercase tracking-[0.2em] text-slate-400">
+                          <tr>
+                            <th className="px-4 py-4">Job</th>
+                            <th className="px-4 py-4">Client</th>
+                            <th className="px-4 py-4">Route</th>
+                            <th className="px-4 py-4">Status</th>
+                            <th className="px-4 py-4">Priority</th>
+                            <th className="px-4 py-4">Docs</th>
+                            <th className="px-4 py-4">Notes</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredJobs.map((job) => (
+                            <tr key={job.id} className="border-b border-white/5 hover:bg-white/5" onClick={() => setSelectedJobId(job.id)}>
+                              <td className="px-4 py-4 text-white">{job.id}</td>
+                              <td className="px-4 py-4 text-slate-200">{job.client}</td>
+                              <td className="px-4 py-4 text-slate-300">{job.origin} - {job.destination}</td>
+                              <td className="px-4 py-4"><Badge className={`rounded-full border ${statusStyles[job.status]}`}>{job.status}</Badge></td>
+                              <td className="px-4 py-4"><Badge className={`rounded-full border ${priorityStyles[job.priority]}`}>{job.priority}</Badge></td>
+                              <td className="px-4 py-4 text-slate-300">{job.attachmentCount}</td>
+                              <td className="max-w-[260px] truncate px-4 py-4 text-slate-400">{job.notes}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </Card>
+                )}
+
+                {filteredJobs.length === 0 && (
+                  <Card className="border border-white/10 bg-white/8 shadow-[0_10px_50px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+                    <CardContent className="flex min-h-[220px] flex-col items-center justify-center p-8 text-center">
+                      <Search className="mb-4 h-8 w-8 text-slate-400" />
+                      <h3 className="text-xl font-semibold text-white">No matching jobs</h3>
+                      <p className="mt-2 max-w-md text-slate-400">Try adjusting your search or filter settings to bring the right jobs back into view.</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                <Card className="border border-white/10 bg-white/8 shadow-[0_10px_50px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-xl text-white">Activity Feed</CardTitle>
+                      <MoreHorizontal className="h-5 w-5 text-slate-400" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {selectedJob ? (
+                      <div className="space-y-4">
+                        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm text-slate-300">Selected job</p>
+                              <h3 className="mt-1 text-lg font-semibold text-white">{selectedJob.client}</h3>
+                              <p className="mt-1 text-sm text-slate-400">{selectedJob.id} - {selectedJob.reference || "No ref"}</p>
+                            </div>
+                            <Eye className="h-5 w-5 text-slate-400" />
+                          </div>
+                        </div>
+                        <div className="space-y-3">
+                          {selectedJob.activity.map((item, idx) => (
+                            <div key={`${item}-${idx}`} className="flex gap-3 rounded-2xl border border-white/10 bg-white/5 p-3">
+                              <div className="mt-1 h-2.5 w-2.5 rounded-full bg-sky-400" />
+                              <div>
+                                <p className="text-sm text-white">{item}</p>
+                                <p className="mt-1 text-xs text-slate-400">{selectedJob.lastUpdated}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-400">Select a job to view activity.</p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card className="border border-white/10 bg-white/8 shadow-[0_10px_50px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+                  <CardHeader>
+                    <CardTitle className="text-xl text-white">Job Snapshot</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {selectedJob ? (
+                      <div className="space-y-3 text-sm">
+                        <div className="flex items-center justify-between rounded-2xl bg-white/5 p-3"><span className="flex items-center gap-2 text-slate-300"><Building2 className="h-4 w-4" />Customer</span><span className="text-white">{selectedJob.client}</span></div>
+                        <div className="flex items-center justify-between rounded-2xl bg-white/5 p-3"><span className="flex items-center gap-2 text-slate-300"><Warehouse className="h-4 w-4" />Origin</span><span className="text-white">{selectedJob.origin}</span></div>
+                        <div className="flex items-center justify-between rounded-2xl bg-white/5 p-3"><span className="flex items-center gap-2 text-slate-300"><Route className="h-4 w-4" />Destination</span><span className="text-white">{selectedJob.destination}</span></div>
+                        <div className="flex items-center justify-between rounded-2xl bg-white/5 p-3"><span className="flex items-center gap-2 text-slate-300"><Paperclip className="h-4 w-4" />Attachments</span><span className="text-white">{selectedJob.attachmentCount}</span></div>
+                        <div className="flex items-center justify-between rounded-2xl bg-white/5 p-3"><span className="flex items-center gap-2 text-slate-300"><ListChecks className="h-4 w-4" />Status</span><Badge className={`rounded-full border ${statusStyles[selectedJob.status]}`}>{selectedJob.status}</Badge></div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-400">Select a job to view details.</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </main>
+        </div>
       </div>
     </div>
-
-    <div class="grid">
-      <div class="card kpi-card">
-        <h3>Total Jobs</h3>
-        <p class="kpi" id="kpiTotal">0</p>
-        <div class="kpi-sub">All current jobs in the system</div>
-      </div>
-
-      <div class="card kpi-card">
-        <h3>Shipping Soon</h3>
-        <p class="kpi" id="kpiSoon">0</p>
-        <div class="kpi-sub">ETA due in the next 7 days</div>
-      </div>
-
-      <div class="card kpi-card">
-        <h3>Docs Pending</h3>
-        <p class="kpi" id="kpiDocs">0</p>
-        <div class="kpi-sub">Jobs waiting on paperwork</div>
-      </div>
-
-      <div class="card kpi-card">
-        <h3>Delivered</h3>
-        <p class="kpi" id="kpiDelivered">0</p>
-        <div class="kpi-sub">Completed and closed jobs</div>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="card">
-        <div class="header-strip">
-          <h2 class="section-title">Jobs Dashboard</h2>
-          <div class="mini-tag">Live browser MVP</div>
-        </div>
-
-        <div class="tabs">
-          <button class="tab active" id="tabAll" onclick="setActiveTab('All')">All Jobs</button>
-          <button class="tab" id="tabProcurement" onclick="setActiveTab('Procurement')">Procurement</button>
-          <button class="tab" id="tabExport Sale" onclick="setActiveTab('Export Sale')">Export Sales</button>
-          <button class="tab" id="tabLocal Sale" onclick="setActiveTab('Local Sale')">Local Sales</button>
-        </div>
-
-        <div class="toolbar">
-          <input id="search" placeholder="Search customer, product, status, carrier, tracking, notes..." oninput="render()" />
-        </div>
-
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Job No.</th>
-                <th>Customer</th>
-                <th>Type</th>
-                <th>Product</th>
-                <th>Qty</th>
-                <th>Ship Date</th>
-                <th>ETA</th>
-                <th>Carrier</th>
-                <th>Tracking</th>
-                <th>Status</th>
-                <th>Notes</th>
-                <th>Update</th>
-              </tr>
-            </thead>
-            <tbody id="jobRows"></tbody>
-          </table>
-        </div>
-
-        <div class="footer-note">
-          This version saves data in your browser on this device only. It is perfect for proving the concept and showing it off before adding document storage and deeper tracking features.
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="header-strip">
-          <h2 class="section-title">Add Job</h2>
-          <div class="mini-tag">Fast entry</div>
-        </div>
-
-        <div class="form-grid">
-          <div>
-            <label>Customer / Supplier</label>
-            <input id="customer" placeholder="Name" />
-          </div>
-
-          <div>
-            <label>Job Type</label>
-            <select id="jobType" onchange="toggleTypeDefaults()">
-              <option>Local Sale</option>
-              <option>Export Sale</option>
-              <option>Procurement</option>
-            </select>
-          </div>
-
-          <div>
-            <label>Product</label>
-            <select id="product">
-              <option>eFUME</option>
-              <option>CO2</option>
-              <option>Ethyl Formate</option>
-              <option>Equipment</option>
-              <option>EDN</option>
-              <option>AQL</option>
-            </select>
-          </div>
-
-          <div>
-            <label>Quantity</label>
-            <input id="qty" placeholder="e.g. 16 cylinders" />
-          </div>
-
-          <div>
-            <label>Ship Date</label>
-            <input id="shipDate" type="date" />
-          </div>
-
-          <div>
-            <label>ETA</label>
-            <input id="eta" type="date" />
-          </div>
-
-          <div>
-            <label>Carrier</label>
-            <input id="carrier" placeholder="e.g. Toll, DHL, Mainfreight" />
-          </div>
-
-          <div>
-            <label>Tracking / Connote No.</label>
-            <input id="tracking" placeholder="Tracking number" />
-          </div>
-
-          <div>
-            <label>Status</label>
-            <select id="status">
-              <option>New</option>
-              <option>Sent</option>
-              <option>Approved</option>
-              <option>Planning</option>
-              <option>Docs Pending</option>
-              <option>Ready to Dispatch</option>
-              <option>Dispatched</option>
-              <option>Delivered</option>
-              <option>On Hold</option>
-              <option>Issue</option>
-            </select>
-          </div>
-        </div>
-
-        <div style="margin-top:12px;">
-          <label>Notes</label>
-          <textarea id="notes" placeholder="Anything important to remember"></textarea>
-        </div>
-
-        <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
-          <button class="btn" onclick="addJob()">Save Job</button>
-          <button class="btn secondary" onclick="clearForm()">Clear</button>
-        </div>
-
-        <div style="margin-top:22px;">
-          <h2 class="section-title">Products</h2>
-          <div class="pill-row" id="productList"></div>
-          <div class="small">You can add the full AQL range later.</div>
-        </div>
-
-        <div style="margin-top:22px;">
-          <h2 class="section-title">Statuses</h2>
-          <div class="pill-row" id="statusList"></div>
-          <div class="small">These can be adjusted as the workflow evolves.</div>
-        </div>
-
-        <div style="margin-top:22px;">
-          <h2 class="section-title">Job Number Logic</h2>
-          <div class="pill-row">
-            <span class="pill">P-001 = Procurement</span>
-            <span class="pill">E-001 = Export Sale</span>
-            <span class="pill">L-001 = Local Sale</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const STORAGE_KEY = "flowcontrol-jobs-v3";
-    let activeTab = "All";
-
-    const products = ["eFUME","CO2","Ethyl Formate","Equipment","EDN","AQL"];
-    const statuses = ["New","Sent","Approved","Planning","Docs Pending","Ready to Dispatch","Dispatched","Delivered","On Hold","Issue"];
-
-    function getJobs(){
-      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    }
-
-    function saveJobs(jobs){
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs));
-    }
-
-    function badgeClass(value){
-      return String(value).replace(/\s+/g, "");
-    }
-
-    function renderPills(){
-      document.getElementById("productList").innerHTML = products.map(p => `<span class="pill">${p}</span>`).join("");
-      document.getElementById("statusList").innerHTML = statuses.map(s => `<span class="pill">${s}</span>`).join("");
-    }
-
-    function setActiveTab(tab){
-      activeTab = tab;
-      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-      const tabId = tab === "All" ? "tabAll" : "tab" + tab;
-      const btn = document.getElementById(tabId);
-      if (btn) btn.classList.add("active");
-      render();
-    }
-
-    function getPrefix(jobType){
-      if (jobType === "Procurement") return "P";
-      if (jobType === "Export Sale") return "E";
-      return "L";
-    }
-
-    function getNextJobNumber(jobType, jobs){
-      const prefix = getPrefix(jobType);
-      const sameType = jobs.filter(j => j.id && j.id.startsWith(prefix + "-"));
-      let max = 0;
-
-      sameType.forEach(j => {
-        const parts = j.id.split("-");
-        const num = parseInt(parts[1], 10);
-        if (!isNaN(num) && num > max) max = num;
-      });
-
-      return `${prefix}-${String(max + 1).padStart(3, "0")}`;
-    }
-
-    function render(){
-      const search = document.getElementById("search").value.toLowerCase().trim();
-      const jobs = getJobs();
-
-      let filtered = jobs.filter(j =>
-        Object.values(j).join(" ").toLowerCase().includes(search)
-      );
-
-      if (activeTab !== "All"){
-        filtered = filtered.filter(j => j.jobType === activeTab);
-      }
-
-      document.getElementById("jobRows").innerHTML = filtered.length ? filtered.map(job => `
-        <tr>
-          <td><strong>${job.id}</strong></td>
-          <td>${job.customer || "-"}</td>
-          <td><span class="badge ${badgeClass(job.jobType)}">${job.jobType}</span></td>
-          <td>${job.product || "-"}</td>
-          <td>${job.qty || "-"}</td>
-          <td>${job.shipDate || "-"}</td>
-          <td>${job.eta || "-"}</td>
-          <td>${job.carrier || "-"}</td>
-          <td>${job.tracking || "-"}</td>
-          <td><span class="badge ${badgeClass(job.status)}">${job.status}</span></td>
-          <td>${job.notes || "-"}</td>
-          <td>
-            <select class="status-select" onchange="updateStatus('${job.id}', this.value)">
-              ${statuses.map(s => `<option ${s===job.status ? "selected" : ""}>${s}</option>`).join("")}
-            </select>
-          </td>
-        </tr>
-      `).join("") : `
-        <tr>
-          <td colspan="12" style="text-align:center; color:#6b7280; padding:24px;">No jobs found</td>
-        </tr>
-      `;
-
-      document.getElementById("kpiTotal").textContent = jobs.length;
-      document.getElementById("kpiDocs").textContent = jobs.filter(j => j.status === "Docs Pending").length;
-      document.getElementById("kpiDelivered").textContent = jobs.filter(j => j.status === "Delivered").length;
-
-      const today = new Date();
-      today.setHours(0,0,0,0);
-
-      const in7 = new Date();
-      in7.setHours(0,0,0,0);
-      in7.setDate(today.getDate() + 7);
-
-      const soon = jobs.filter(j => {
-        if (!j.eta) return false;
-        const d = new Date(j.eta + "T00:00:00");
-        return d >= today && d <= in7;
-      }).length;
-
-      document.getElementById("kpiSoon").textContent = soon;
-    }
-
-    function toggleTypeDefaults(){
-      const jobType = document.getElementById("jobType").value;
-      const statusEl = document.getElementById("status");
-
-      if (jobType === "Procurement" || jobType === "Export Sale"){
-        statusEl.value = "Planning";
-      } else {
-        statusEl.value = "New";
-      }
-    }
-
-    function addJob(){
-      const customer = document.getElementById("customer").value.trim();
-      const jobType = document.getElementById("jobType").value;
-      const product = document.getElementById("product").value;
-      const qty = document.getElementById("qty").value.trim();
-      const shipDate = document.getElementById("shipDate").value;
-      const eta = document.getElementById("eta").value;
-      const carrier = document.getElementById("carrier").value.trim();
-      const tracking = document.getElementById("tracking").value.trim();
-      const status = document.getElementById("status").value;
-      const notes = document.getElementById("notes").value.trim();
-
-      if (!customer){
-        alert("Please enter a customer or supplier");
-        return;
-      }
-
-      const jobs = getJobs();
-      const id = getNextJobNumber(jobType, jobs);
-
-      const job = {
-        id,
-        customer,
-        jobType,
-        product,
-        qty,
-        shipDate,
-        eta,
-        carrier,
-        tracking,
-        status,
-        notes,
-        createdAt: new Date().toISOString()
-      };
-
-      jobs.unshift(job);
-      saveJobs(jobs);
-      clearForm();
-      render();
-    }
-
-    function clearForm(){
-      document.getElementById("customer").value = "";
-      document.getElementById("jobType").value = "Local Sale";
-      document.getElementById("product").value = "eFUME";
-      document.getElementById("qty").value = "";
-      document.getElementById("shipDate").value = "";
-      document.getElementById("eta").value = "";
-      document.getElementById("carrier").value = "";
-      document.getElementById("tracking").value = "";
-      document.getElementById("status").value = "New";
-      document.getElementById("notes").value = "";
-    }
-
-    function updateStatus(id, value){
-      const jobs = getJobs();
-      const idx = jobs.findIndex(j => j.id === id);
-      if (idx >= 0){
-        jobs[idx].status = value;
-        saveJobs(jobs);
-        render();
-      }
-    }
-
-    function seedSampleData(){
-      const sample = [
-        {
-          id:"E-001",
-          customer:"Pharmochem",
-          jobType:"Export Sale",
-          product:"eFUME",
-          qty:"16 cylinders",
-          shipDate:"2026-04-08",
-          eta:"2026-04-15",
-          carrier:"Mainfreight",
-          tracking:"EX-445812",
-          status:"Ready to Dispatch",
-          notes:"Auckland shipment",
-          createdAt:new Date().toISOString()
-        },
-        {
-          id:"L-001",
-          customer:"Local Customer",
-          jobType:"Local Sale",
-          product:"AQL",
-          qty:"4 drums",
-          shipDate:"2026-04-10",
-          eta:"2026-04-10",
-          carrier:"Toll",
-          tracking:"LS-889101",
-          status:"Planning",
-          notes:"Quote approved",
-          createdAt:new Date().toISOString()
-        },
-        {
-          id:"P-001",
-          customer:"Internal Transfer",
-          jobType:"Procurement",
-          product:"Equipment",
-          qty:"2 monitors",
-          shipDate:"2026-04-12",
-          eta:"2026-04-12",
-          carrier:"Internal",
-          tracking:"INT-001",
-          status:"Docs Pending",
-          notes:"Internal movement",
-          createdAt:new Date().toISOString()
-        }
-      ];
-      saveJobs(sample);
-      render();
-    }
-
-    function exportData(){
-      const jobs = getJobs();
-      if (!jobs.length){
-        alert("No jobs to export yet");
-        return;
-      }
-
-      const headers = ["id","customer","jobType","product","qty","shipDate","eta","carrier","tracking","status","notes","createdAt"];
-      const rows = [headers.join(",")].concat(
-        jobs.map(j => headers.map(h => `"${String(j[h] || "").replace(/"/g,'""')}"`).join(","))
-      );
-
-      const blob = new Blob([rows.join("\n")], {type:"text/csv;charset=utf-8;"});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "flowcontrol-jobs.csv";
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    renderPills();
-    render();
-  </script>
-</body>
-</html>
+  );
+}
